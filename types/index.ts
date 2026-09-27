@@ -2,6 +2,26 @@ export type SubmissionStatus = 'New' | 'In Progress' | 'Contacted' | 'Completed'
 
 export type PortalStatus = 'Verified' | 'Active' | 'Pending Review' | 'Suspended';
 
+export type ClientStatus = 'Active' | 'Onboarding' | 'Filing Pending' | 'Completed' | 'Inactive';
+export type ClientType = 'Individual' | 'Corporate' | 'Partnership' | 'Small Business';
+
+export interface Client {
+  id: string;
+  clientName: string;
+  companyName?: string;
+  email: string;
+  phone: string;
+  clientType: ClientType;
+  assignedCPA: string;
+  taxYear: string;
+  status: ClientStatus;
+  totalFilings: number;
+  lastFilingDate?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface Submission {
   id: string;
   type?: 'consultation' | 'quick_contact';

@@ -11,6 +11,7 @@ import {
   Sliders,
   ArrowUpRight,
   ShieldCheck,
+  Contact,
   LucideIcon
 } from 'lucide-react';
 
@@ -25,6 +26,7 @@ const navigation: NavigationItem[] = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
   { name: 'Form Submissions', href: '/submissions', icon: Inbox, badge: 'Live' },
   { name: 'Portal Registrations', href: '/registrations', icon: Users },
+  { name: 'Clients', href: '/clients', icon: Contact },
   { name: 'Appointment Schedule', href: '/calendar', icon: Calendar },
   // { name: 'API & Webhooks', href: '/settings', icon: Sliders },
 ];
