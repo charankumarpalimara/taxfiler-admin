@@ -2,17 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  X, Building, Mail, Phone, Calendar, UserCheck, FileText, CheckCircle2,
+  ArrowLeft, Building, Mail, Phone, Calendar, UserCheck, FileText, CheckCircle2,
   Tag, Download, ExternalLink, ShieldCheck, CreditCard, Home, Users,
-  Sparkles, Loader2, Save, AlertCircle, Eye
+  Sparkles, Loader2, Save, AlertCircle, Eye, Trash2, ChevronRight, Briefcase
 } from 'lucide-react';
 import { Client, ClientStatus, ClientType, UserFullDetails, UserDocument } from '@/types';
 import { API_BASE_URL } from '@/services/api.config';
 
-export interface ClientDetailsModalProps {
+export interface ClientDetailsScreenProps {
   client: Client;
-  onClose: () => void;
+  onBack: () => void;
   onUpdate: (id: string, updates: Partial<Client>) => Promise<void>;
+  onDelete?: (id: string) => Promise<void> | void;
 }
 
 const FILING_STATUS_STEPS = [
@@ -25,7 +26,12 @@ const FILING_STATUS_STEPS = [
   'Accepted by IRS / Refund Issued',
 ];
 
-export default function ClientDetailsModal({ client, onClose, onUpdate }: ClientDetailsModalProps) {
+export default function ClientDetailsScreen({
+  client,
+  onBack,
+  onUpdate,
+  onDelete,
+}: ClientDetailsScreenProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'taxpayer' | 'dependents' | 'address' | 'identity_bank' | 'documents'>('overview');
   const [fullDetails, setFullDetails] = useState<UserFullDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState<boolean>(true);
@@ -47,7 +53,23 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [docActionLoading, setDocActionLoading] = useState<string | null>(null);
 
-  // Fetch complete client information from backend
+  // Sync formData if incoming client prop changes
+  useEffect(() => {
+    setFormData({
+      clientName: client.clientName,
+      companyName: client.companyName || '',
+      email: client.email,
+      phone: client.phone,
+      clientType: client.clientType,
+      assignedCPA: client.assignedCPA || 'David Miller, CPA',
+      taxYear: client.taxYear || '2025',
+      status: client.status,
+      filingStatus: client.filingStatus || 'Documents Uploaded',
+      notes: client.notes || '',
+    });
+  }, [client]);
+
+  // Fetch complete client profile information from backend
   useEffect(() => {
     let isMounted = true;
     const loadFullDetails = async () => {
@@ -119,7 +141,6 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
     }
   };
 
-  // Helper to resolve document download URL
   const getDownloadUrl = (path?: string) => {
     if (!path) return '#';
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
@@ -137,40 +158,100 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/65 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
-        {/* Header */}
-        <div className="px-6 py-5 bg-gradient-to-r from-brand-blue-dark via-brand-primary to-brand-secondary text-white flex items-center justify-between shadow-md shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-brand-gold-light font-black text-base border border-white/20">
-              {client.clientName?.[0] || 'C'}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-base font-heading tracking-wide text-white">{client.clientName}</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white/20 text-white border border-white/30">
-                  {client.id}
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-accent/20 text-brand-gold-light border border-brand-accent/30">
-                  {formData.filingStatus}
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 font-medium">
-                {client.companyName || 'Individual Tax Account'} &bull; {client.email} &bull; {client.phone}
-              </p>
-            </div>
-          </div>
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Top Breadcrumb & Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
           <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white p-2 rounded-xl hover:bg-white/10 cursor-pointer transition-colors"
+            onClick={onBack}
             type="button"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs border border-border-subtle shadow-xs transition-all cursor-pointer group"
           >
-            <X className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back to Clients Directory</span>
           </button>
+
+          <div className="hidden sm:flex items-center gap-2 text-xs text-text-light font-medium">
+            <span>Clients</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+            <span className="font-bold text-text-dark">{formData.clientName}</span>
+            <span className="text-[11px] px-2 py-0.5 rounded-md bg-bg-subtle text-text-mid font-mono font-bold">
+              {client.id}
+            </span>
+          </div>
         </div>
 
-        {/* Sub-Tab Navigation */}
-        <div className="px-6 pt-3 pb-2 border-b border-border-subtle bg-bg-light flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+        {onDelete && (
+          <button
+            onClick={() => {
+              if (confirm(`Are you sure you want to permanently delete the client record for ${client.clientName}?`)) {
+                onDelete(client.id);
+                onBack();
+              }
+            }}
+            type="button"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-rose-600 hover:text-white hover:bg-rose-600 border border-rose-200 hover:border-rose-600 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Delete Client</span>
+          </button>
+        )}
+      </div>
+
+      {/* Main Hero Card Banner */}
+      <div className="bg-white rounded-3xl border border-border-subtle shadow-sm overflow-hidden">
+        <div className="px-6 py-6 sm:px-8 sm:py-7 bg-gradient-to-r from-brand-blue-dark via-brand-primary to-brand-secondary text-white relative">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-brand-gold-light font-black text-2xl border border-white/20 shrink-0 shadow-inner">
+                {formData.clientName?.[0] || 'C'}
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h1 className="font-extrabold text-xl sm:text-2xl font-heading text-white tracking-tight">
+                    {formData.clientName}
+                  </h1>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-white/20 text-white border border-white/30 font-mono">
+                    {client.id}
+                  </span>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-brand-accent/25 text-brand-gold-light border border-brand-accent/40">
+                    {formData.clientType}
+                  </span>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    {formData.status}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
+                  <span className="font-medium text-white">{formData.companyName || 'Individual Tax Return'}</span>
+                  <span>&bull;</span>
+                  <a href={`mailto:${formData.email}`} className="hover:text-brand-gold-light underline underline-offset-2">
+                    {formData.email}
+                  </a>
+                  <span>&bull;</span>
+                  <a href={`tel:${formData.phone}`} className="hover:text-brand-gold-light">
+                    {formData.phone}
+                  </a>
+                  <span>&bull;</span>
+                  <span>Tax Year <strong className="text-white">{formData.taxYear}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Status Pill in Banner */}
+            <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-2 shrink-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">IRS Tax Filing Step</span>
+              <span className="px-3.5 py-1.5 rounded-xl bg-brand-accent text-brand-blue-dark font-extrabold text-xs shadow-md">
+                {formData.filingStatus}
+              </span>
+              <span className="text-[11px] text-slate-300">
+                Assigned: <strong className="text-white">{formData.assignedCPA}</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Sub-Tab Navigation Bar */}
+        <div className="px-6 sm:px-8 pt-3 pb-2.5 border-b border-border-subtle bg-bg-light flex items-center gap-2 overflow-x-auto no-scrollbar">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -179,10 +260,11 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 type="button"
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${isActive
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  isActive
                     ? 'bg-brand-primary text-white shadow-sm border border-brand-primary'
-                    : 'text-text-mid hover:text-text-dark hover:bg-bg-subtle'
-                  }`}
+                    : 'text-text-mid hover:text-text-dark hover:bg-bg-subtle border border-transparent'
+                }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-brand-gold-light' : 'text-text-light'}`} />
                 <span>{tab.label}</span>
@@ -191,36 +273,41 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
           })}
         </div>
 
-        {/* Content Body */}
-        <div className="p-6 text-xs overflow-y-auto flex-1 space-y-6">
+        {/* Tab Content Section */}
+        <div className="p-6 sm:p-8 space-y-6">
           {savedSuccess && (
-            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-2 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span className="font-bold">Client record and tax filing status updated successfully!</span>
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-2.5 animate-in fade-in">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span className="font-bold text-xs">Client record and tax filing details saved successfully!</span>
             </div>
           )}
 
           {/* TAB 1: OVERVIEW & STATUS */}
           {activeTab === 'overview' && (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Filing Status Workflow Progress Banner */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-brand-primary/5 to-brand-secondary/10 border border-border-subtle space-y-3">
-                <div className="flex items-center justify-between">
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-brand-primary/5 to-brand-secondary/10 border border-border-subtle space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h4 className="text-xs font-black uppercase text-brand-primary tracking-wider">IRS Tax Filing Progression</h4>
-                    <p className="text-[11px] text-text-mid">Update client's status as their return advances through preparation and IRS filing.</p>
+                    <h3 className="text-xs font-black uppercase text-brand-primary tracking-wider font-heading">
+                      IRS Tax Filing Progression Pipeline
+                    </h3>
+                    <p className="text-xs text-text-mid mt-0.5">
+                      Advance client return status through IRS documentation, CPA preparation, and e-filing stages.
+                    </p>
                   </div>
-                  <span className="px-2.5 py-1 rounded-lg bg-brand-primary text-white font-extrabold text-[11px] shadow-sm">
+                  <span className="px-3 py-1 rounded-xl bg-brand-primary text-white font-extrabold text-xs shadow-xs self-start sm:self-auto">
                     {formData.filingStatus}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Tax Filing Step</label>
+                    <label className="text-xs font-bold text-text-dark block mb-1.5">Tax Filing Step</label>
                     <select
                       value={formData.filingStatus}
                       onChange={(e) => setFormData({ ...formData, filingStatus: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-border-subtle bg-white font-bold text-xs text-text-dark focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border-subtle bg-white font-bold text-xs text-text-dark focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all cursor-pointer"
                     >
                       {FILING_STATUS_STEPS.map((step) => (
                         <option key={step} value={step}>{step}</option>
@@ -228,11 +315,11 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Portal Account Status</label>
+                    <label className="text-xs font-bold text-text-dark block mb-1.5">Portal Account Status</label>
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value as ClientStatus })}
-                      className="w-full px-3 py-2 rounded-xl border border-border-subtle bg-white font-bold text-xs text-slate-900 focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border-subtle bg-white font-bold text-xs text-slate-900 focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all cursor-pointer"
                     >
                       <option value="Active">Active</option>
                       <option value="Onboarding">Onboarding</option>
@@ -245,58 +332,88 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
               </div>
 
               {/* Client Info Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Client Full Name</label>
+                  <label className="text-xs font-bold text-text-dark block mb-1">Client Full Name</label>
                   <input
                     type="text"
                     value={formData.clientName}
                     onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 font-semibold"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-subtle bg-white font-semibold text-xs text-text-dark focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Email Address</label>
+                  <label className="text-xs font-bold text-text-dark block mb-1">Company / Entity Name</label>
+                  <input
+                    type="text"
+                    value={formData.companyName}
+                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                    placeholder="e.g. Acme Corp LLC"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-subtle bg-white font-semibold text-xs text-text-dark focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-text-dark block mb-1">Entity Type</label>
+                  <select
+                    value={formData.clientType}
+                    onChange={(e) => setFormData({ ...formData, clientType: e.target.value as ClientType })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-subtle bg-white font-semibold text-xs text-text-dark focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary cursor-pointer"
+                  >
+                    <option value="Individual">Individual</option>
+                    <option value="Corporate">Corporate</option>
+                    <option value="Partnership">Partnership</option>
+                    <option value="Small Business">Small Business</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-text-dark block mb-1">Email Address</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 font-semibold"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-subtle bg-white font-semibold text-xs text-text-dark focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Phone Number</label>
+                  <label className="text-xs font-bold text-text-dark block mb-1">Phone Number</label>
                   <input
                     type="text"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 font-semibold"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-subtle bg-white font-semibold text-xs text-text-dark focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Assigned CPA</label>
+                  <label className="text-xs font-bold text-text-dark block mb-1">Assigned CPA Specialist</label>
                   <input
                     type="text"
                     value={formData.assignedCPA}
                     onChange={(e) => setFormData({ ...formData, assignedCPA: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 font-semibold"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-subtle bg-white font-semibold text-xs text-text-dark focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
                   />
                 </div>
               </div>
 
               {/* Staff CPA Notes */}
               <div>
-                <label className="text-xs font-bold text-slate-700">CPA Staff Notes & Tax Return Comments</label>
+                <label className="text-xs font-bold text-text-dark block mb-1">
+                  CPA Staff Internal Notes & Tax Return Comments
+                </label>
                 <textarea
                   rows={4}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Add internal notes regarding this client's documents, deductions, Schedule C, IRS correspondence..."
-                  className="w-full mt-1 p-3 rounded-xl border border-slate-200 font-medium text-xs focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
+                  placeholder="Add internal notes regarding this client's documents, deductions, Schedule C, IRS correspondence, Zoom meetings..."
+                  className="w-full p-3.5 rounded-2xl border border-border-subtle bg-bg-light focus:bg-white font-medium text-xs text-text-dark focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
                 />
               </div>
 
-              <div className="flex justify-end pt-2">
+              <div className="flex items-center justify-between pt-2 border-t border-border-subtle">
+                <span className="text-xs text-text-light">
+                  Last updated {client.updatedAt ? new Date(client.updatedAt).toLocaleDateString() : 'recently'}
+                </span>
                 <button
                   type="submit"
                   disabled={loading}
@@ -313,12 +430,12 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
           {activeTab === 'taxpayer' && (
             <div className="space-y-6">
               {/* Primary Taxpayer */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <h4 className="text-xs font-black text-brand-primary uppercase tracking-wider flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-brand-accent" /> Primary Taxpayer Details
-                </h4>
+              <div className="p-5 rounded-2xl bg-bg-light border border-border-subtle space-y-4">
+                <h3 className="text-xs font-black text-brand-primary uppercase tracking-wider flex items-center gap-2 font-heading">
+                  <UserCheck className="w-4 h-4 text-brand-accent" /> Primary Taxpayer Profile
+                </h3>
                 {fullDetails?.taxpayer ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-slate-700">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-slate-700">
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">Full Name</span>
                       <span className="font-bold text-slate-900 text-xs">
@@ -348,12 +465,12 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
               </div>
 
               {/* Spouse Details */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <h4 className="text-xs font-black text-brand-primary uppercase tracking-wider flex items-center gap-2">
+              <div className="p-5 rounded-2xl bg-bg-light border border-border-subtle space-y-4">
+                <h3 className="text-xs font-black text-brand-primary uppercase tracking-wider flex items-center gap-2 font-heading">
                   <Users className="w-4 h-4 text-brand-accent" /> Spouse Personal Details
-                </h4>
+                </h3>
                 {fullDetails?.spouse && fullDetails.spouse.firstName ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-slate-700">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-slate-700">
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">Spouse Name</span>
                       <span className="font-bold text-slate-900 text-xs">
@@ -379,11 +496,11 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
           {/* TAB 3: DEPENDENTS */}
           {activeTab === 'dependents' && (
             <div className="space-y-4">
-              <h4 className="text-xs font-black text-brand-primary uppercase tracking-wider">Claimed Dependents</h4>
+              <h3 className="text-xs font-black text-brand-primary uppercase tracking-wider font-heading">Claimed Dependents</h3>
               {fullDetails?.dependents && fullDetails.dependents.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {fullDetails.dependents.map((dep, idx) => (
-                    <div key={dep.id || dep._id || idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div key={dep.id || dep._id || idx} className="p-4 rounded-2xl bg-bg-light border border-border-subtle space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-brand-primary text-xs">
                           {dep.name || `${dep.firstName || ''} ${dep.lastName || ''}`.trim() || `Dependent #${idx + 1}`}
@@ -406,7 +523,9 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 italic py-4 text-center">No dependents claimed by this client.</p>
+                <div className="text-center py-8 bg-bg-light rounded-2xl border border-dashed border-border-subtle">
+                  <p className="text-xs text-slate-400 italic">No dependents claimed by this client.</p>
+                </div>
               )}
             </div>
           )}
@@ -415,8 +534,8 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
           {activeTab === 'address' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                  <h4 className="text-xs font-black text-brand-primary uppercase tracking-wider">Current Residential Address</h4>
+                <div className="p-5 rounded-2xl bg-bg-light border border-border-subtle space-y-2">
+                  <h3 className="text-xs font-black text-brand-primary uppercase tracking-wider font-heading">Current Residential Address</h3>
                   {fullDetails?.address?.currentAddress ? (
                     <div className="space-y-1 text-slate-700 text-xs">
                       <p className="font-bold text-slate-900">{fullDetails.address.currentAddress.street || 'Street not set'}</p>
@@ -425,12 +544,12 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                       </p>
                     </div>
                   ) : (
-                    <p className="text-slate-400 italic">No current address entered.</p>
+                    <p className="text-slate-400 italic text-xs">No current address entered.</p>
                   )}
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                  <h4 className="text-xs font-black text-brand-primary uppercase tracking-wider">Tax Year 2024 Filing Address</h4>
+                <div className="p-5 rounded-2xl bg-bg-light border border-border-subtle space-y-2">
+                  <h3 className="text-xs font-black text-brand-primary uppercase tracking-wider font-heading">Tax Year 2024 Filing Address</h3>
                   {fullDetails?.address?.taxYearAddress ? (
                     <div className="space-y-1 text-slate-700 text-xs">
                       <p className="font-bold text-slate-900">{fullDetails.address.taxYearAddress.street || 'Street not set'}</p>
@@ -439,15 +558,15 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                       </p>
                     </div>
                   ) : (
-                    <p className="text-slate-400 italic">No tax year address entered.</p>
+                    <p className="text-slate-400 italic text-xs">No tax year address entered.</p>
                   )}
                 </div>
               </div>
 
               {/* Contact Details */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <h4 className="text-xs font-black text-brand-primary uppercase tracking-wider">Contact Communication Details</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-slate-700">
+              <div className="p-5 rounded-2xl bg-bg-light border border-border-subtle space-y-3">
+                <h3 className="text-xs font-black text-brand-primary uppercase tracking-wider font-heading">Contact Communication Details</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-slate-700">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 block uppercase">Primary Email</span>
                     <span className="font-bold text-slate-900 text-xs">{fullDetails?.contact?.email || client.email}</span>
@@ -473,12 +592,12 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
           {activeTab === 'identity_bank' && (
             <div className="space-y-6">
               {/* Identity Verification */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <h4 className="text-xs font-black text-brand-primary uppercase tracking-wider flex items-center gap-2">
+              <div className="p-5 rounded-2xl bg-bg-light border border-border-subtle space-y-3">
+                <h3 className="text-xs font-black text-brand-primary uppercase tracking-wider flex items-center gap-2 font-heading">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" /> Identity Verification (Driver's License / State ID)
-                </h4>
+                </h3>
                 {fullDetails?.identity ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-slate-700">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-slate-700">
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">License / ID Number</span>
                       <span className="font-mono font-bold text-slate-900 text-xs">{fullDetails.identity.licenseNumber || 'N/A'}</span>
@@ -503,22 +622,22 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                           <Eye className="w-3.5 h-3.5" /> View ID File
                         </a>
                       ) : (
-                        <span className="text-slate-400 italic">No file attached</span>
+                        <span className="text-slate-400 italic text-xs">No file attached</span>
                       )}
                     </div>
                   </div>
                 ) : (
-                  <p className="text-slate-400 italic">No identity verification record submitted.</p>
+                  <p className="text-slate-400 italic text-xs">No identity verification record submitted.</p>
                 )}
               </div>
 
               {/* Bank Details */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <h4 className="text-xs font-black text-brand-primary uppercase tracking-wider flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-brand-accent" /> Bank Details (IRS Direct Deposit / Refund Account)
-                </h4>
+              <div className="p-5 rounded-2xl bg-bg-light border border-border-subtle space-y-3">
+                <h3 className="text-xs font-black text-brand-primary uppercase tracking-wider flex items-center gap-2 font-heading">
+                  <CreditCard className="w-4 h-4 text-brand-accent" /> Bank Direct Deposit Account (IRS Refund)
+                </h3>
                 {fullDetails?.bank ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-slate-700">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-slate-700">
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">Bank Name</span>
                       <span className="font-bold text-slate-900 text-xs">{fullDetails.bank.bankName || 'N/A'}</span>
@@ -541,7 +660,7 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                     </div>
                   </div>
                 ) : (
-                  <p className="text-slate-400 italic">No bank direct deposit details recorded yet.</p>
+                  <p className="text-slate-400 italic text-xs">No bank direct deposit details recorded yet.</p>
                 )}
               </div>
             </div>
@@ -552,16 +671,16 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-black text-brand-primary uppercase tracking-wider">Uploaded Tax Documents</h4>
-                  <p className="text-[11px] text-slate-500">All W-2s, 1099s, and tax files uploaded by this user in their dashboard.</p>
+                  <h3 className="text-xs font-black text-brand-primary uppercase tracking-wider font-heading">Uploaded Tax Documents</h3>
+                  <p className="text-xs text-slate-500">All W-2s, 1099s, and tax documents submitted for this tax year.</p>
                 </div>
-                <span className="text-xs font-bold text-slate-600">
+                <span className="text-xs font-bold text-slate-600 px-3 py-1 bg-bg-light border border-border-subtle rounded-xl">
                   {fullDetails?.documents?.length || 0} Total Files
                 </span>
               </div>
 
               {fullDetails?.documents && fullDetails.documents.length > 0 ? (
-                <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden bg-white">
+                <div className="divide-y divide-slate-100 border border-border-subtle rounded-2xl overflow-hidden bg-white">
                   {fullDetails.documents.map((doc) => (
                     <div key={doc.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors">
                       <div className="flex items-center gap-3">
@@ -580,12 +699,13 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                       </div>
 
                       <div className="flex items-center gap-2 self-end sm:self-center">
-                        <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full ${doc.status === 'Approved'
+                        <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full ${
+                          doc.status === 'Approved'
                             ? 'bg-emerald-100 text-emerald-800'
                             : doc.status === 'Rejected'
                               ? 'bg-rose-100 text-rose-800'
                               : 'bg-amber-100 text-amber-800'
-                          }`}>
+                        }`}>
                           {doc.status || 'Pending Review'}
                         </span>
 
@@ -595,7 +715,7 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                             type="button"
                             disabled={docActionLoading === doc.id}
                             onClick={() => handleDocumentStatusChange(doc.id, 'Approved')}
-                            className="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] border border-emerald-200 cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] border border-emerald-200 cursor-pointer transition-colors"
                           >
                             Approve
                           </button>
@@ -603,7 +723,7 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                             type="button"
                             disabled={docActionLoading === doc.id}
                             onClick={() => handleDocumentStatusChange(doc.id, 'Rejected')}
-                            className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[10px] border border-rose-200 cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[10px] border border-rose-200 cursor-pointer transition-colors"
                           >
                             Reject
                           </button>
@@ -624,7 +744,7 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }: Client
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <div className="text-center py-10 bg-bg-light rounded-2xl border border-dashed border-border-subtle">
                   <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                   <p className="text-xs text-slate-500 font-medium">No documents uploaded by this user yet.</p>
                 </div>

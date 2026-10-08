@@ -11,10 +11,11 @@ export interface Client {
   companyName?: string;
   email: string;
   phone: string;
-  clientType: ClientType;
+  clientType: ClientType | string;
   assignedCPA: string;
   taxYear: string;
-  status: ClientStatus;
+  status: ClientStatus | string;
+  filingStatus?: string;
   totalFilings: number;
   lastFilingDate?: string;
   notes?: string;
@@ -56,10 +57,107 @@ export interface Registration {
   updatedAt?: string;
 }
 
+export interface UserDocument {
+  id: string;
+  documentType: string;
+  person: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  status: 'Pending Review' | 'Approved' | 'Rejected' | string;
+  reviewNotes?: string;
+  createdAt: string;
+  user?: {
+    id?: string;
+    fullName?: string;
+    email?: string;
+    phone?: string;
+  } | null;
+}
+
+export interface UserFullDetails {
+  user: {
+    id: string;
+    fullName: string;
+    firstName?: string;
+    lastName?: string;
+    email: string;
+    phone?: string;
+    role?: string;
+    portalStatus: string;
+    filingStatus: string;
+    assignedCPA: string;
+    accountType: string;
+    referralId?: string;
+    notes?: string;
+    createdAt: string;
+  };
+  taxpayer?: {
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    ssn?: string;
+    dob?: string;
+    filingStatus?: string;
+    occupation?: string;
+  } | null;
+  spouse?: {
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    ssn?: string;
+    dob?: string;
+  } | null;
+  dependents?: Array<{
+    id?: string;
+    _id?: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    ssn?: string;
+    dob?: string;
+    relationship?: string;
+  }>;
+  address?: {
+    currentAddress?: { street?: string; city?: string; state?: string; zipCode?: string };
+    taxYearAddress?: { street?: string; city?: string; state?: string; zipCode?: string };
+  } | null;
+  contact?: {
+    email?: string;
+    phone?: string;
+    alternateEmail?: string;
+    alternatePhone?: string;
+  } | null;
+  identity?: {
+    licenseNumber?: string;
+    stateOfIssue?: string;
+    expirationDate?: string;
+    licenseDocument?: string;
+  } | null;
+  bank?: {
+    bankName?: string;
+    accountType?: string;
+    accountNumber?: string;
+    routingNumber?: string;
+    accountHolderName?: string;
+  } | null;
+  documents?: UserDocument[];
+  schedules?: any[];
+  referrals?: any[];
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   count?: number;
+  pagination?: PaginationMeta;
   message?: string;
   error?: string;
 }

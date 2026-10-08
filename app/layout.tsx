@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "NEXGEN Portal | Executive Admin Dashboard",
   description: "Executive portal for NEXGEN Accounting Group to view and manage client consultation requests, contact form submissions, and user registrations.",
+  icons: {
+    icon: "/favicon.jpeg",
+    apple: "/favicon.jpeg",
+  },
 };
 
 export default function RootLayout({

@@ -36,16 +36,31 @@ export default function CalendarPage() {
 
   return (
     <AdminLayout title="Consultation Schedule & Calendar" onRefresh={fetchData} isRefreshing={isRefreshing}>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-black text-slate-900">Upcoming CPA Consultations</h2>
-            <p className="text-xs text-slate-500">
-              Chronological schedule of client consultations booked via the online calendar.
-            </p>
+      <div className="space-y-4">
+        {/* Calendar Schedule Header Card */}
+        <div className="bg-white rounded-md border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-brand-primary/10 border border-brand-primary/15 text-brand-primary flex items-center justify-center shrink-0 shadow-xs">
+              <CalendarIcon className="w-6 h-6 text-brand-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-black text-slate-900 font-heading tracking-tight">
+                  Upcoming CPA Consultations
+                </h2>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Calendar
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
+                Chronological schedule of client consultations booked via the online calendar.
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200">
+
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+            <span className="px-3.5 py-2.5 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200/80 shadow-xs">
               {scheduledList.length} Scheduled Appointments
             </span>
           </div>

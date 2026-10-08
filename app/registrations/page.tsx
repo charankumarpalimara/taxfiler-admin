@@ -5,7 +5,7 @@ import AdminLayout from '@/components/AdminLayout';
 import DataTable, { Column } from '@/components/DataTable';
 import NewRegistrationModal from '@/components/NewRegistrationModal';
 import { Registration, PortalStatus, ApiResponse } from '@/types';
-import { Download, Trash2, UserPlus } from 'lucide-react';
+import { Download, Trash2, UserPlus, UserCheck } from 'lucide-react';
 
 const STATUS_FILTERS: string[] = ['All', 'Verified', 'Pending Review', 'Active'];
 
@@ -82,13 +82,14 @@ export default function RegistrationsPage() {
   };
 
   // Dynamic Export CSV handler
-  const handleExportCSV = (exportItems: Registration[]) => {
-    if (!exportItems || exportItems.length === 0) {
+  const handleExportCSV = (exportItems?: Registration[]) => {
+    const items = exportItems && exportItems.length > 0 ? exportItems : registrations;
+    if (!items || items.length === 0) {
       alert('No registrations to export');
       return;
     }
     const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Portal Status', 'Account Type', 'Created At'];
-    const rows = exportItems.map((r) => [
+    const rows = items.map((r) => [
       `"${r.id || ''}"`,
       `"${r.fullName || ''}"`,
       `"${r.email || ''}"`,
@@ -221,12 +222,46 @@ export default function RegistrationsPage() {
       onRefresh={fetchRegistrations} 
       isRefreshing={isRefreshing}
     >
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-black text-slate-900">Registered Client Accounts</h2>
-          <p className="text-xs text-slate-500">
-            Clients who registered through the portal modal on the website.
-          </p>
+      <div className="space-y-2">
+        {/* Registrations Directory Header Card */}
+        <div className="bg-white rounded-md border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-brand-primary/10 border border-brand-primary/15 text-brand-primary flex items-center justify-center shrink-0 shadow-xs">
+              <UserCheck className="w-6 h-6 text-brand-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-black text-slate-900 font-heading tracking-tight">
+                  Registered Client Accounts
+                </h2>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Directory
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
+                Clients who registered through the portal modal on the website.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+            <button
+              onClick={() => handleExportCSV(registrations)}
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-500" /> Export CSV
+            </button>
+
+            <button
+              onClick={() => setShowNewModal(true)}
+              type="button"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl btn-brand-primary text-xs shadow-md shadow-brand-primary/20 hover:opacity-95 active:scale-95 transition-all cursor-pointer font-bold"
+            >
+              <UserPlus className="w-3.5 h-3.5" /> Register Client
+            </button>
+          </div>
         </div>
 
         {/* Fully Dynamic DataTable */}
@@ -244,24 +279,6 @@ export default function RegistrationsPage() {
           emptyMessage="No registered clients found"
           emptySubtext="Try adjusting your search query or status filter."
           footerLabel="NexGen Portal Accounts Engine"
-          toolbarActions={(filteredItems) => (
-            <>
-              <button
-                onClick={() => handleExportCSV(filteredItems)}
-                type="button"
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-bg-light hover:bg-bg-subtle text-text-dark text-xs font-semibold border border-border-subtle transition-colors cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5 text-text-light" /> Export CSV
-              </button>
-              <button
-                onClick={() => setShowNewModal(true)}
-                type="button"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 btn-brand-primary text-xs shadow-md shadow-brand-primary/20 active:scale-95 cursor-pointer"
-              >
-                <UserPlus className="w-3.5 h-3.5" /> Register Client
-              </button>
-            </>
-          )}
         />
       </div>
 

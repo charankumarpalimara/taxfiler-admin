@@ -15,12 +15,30 @@ export async function OPTIONS() {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const full = searchParams.get('full');
+
+    if (id && full) {
+      const fullDetails = await ClientsService.getClientFullDetails(id);
+      return NextResponse.json({ success: true, data: fullDetails }, { headers: corsHeaders });
+    }
+
     const status = searchParams.get('status');
     const search = searchParams.get('search');
     const clientType = searchParams.get('clientType');
+    const page = searchParams.get('page');
+    const limit = searchParams.get('limit');
 
-    const data = await ClientsService.getClients({ status, search, clientType });
-    return NextResponse.json({ success: true, count: data.length, data }, { headers: corsHeaders });
+    const result = await ClientsService.getClients({ status, search, clientType, page, limit });
+    return NextResponse.json(
+      {
+        success: true,
+        count: result.count,
+        pagination: result.pagination,
+        data: result.data,
+      },
+      { headers: corsHeaders }
+    );
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
   }

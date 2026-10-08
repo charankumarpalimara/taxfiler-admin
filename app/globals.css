@@ -1,51 +1,87 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand Color Palette from Website */
-  --color-brand-primary: #1455B8;
-  --color-brand-secondary: #1688E8;
-  --color-brand-accent: #72C900;
+  /* ── Brand Color Palette (Derived from dark-logo.jpeg & Website) ─────────────────── */
+  --color-brand-primary: #0B2238;
+  --color-brand-secondary: #14385C;
+  --color-brand-accent: #C5A059;
 
-  /* Deep professional blue & dark navy */
-  --color-brand-blue: #1455B8;
-  --color-brand-blue-light: #1688E8;
-  --color-brand-blue-dark: #0E3E85;
+  /* Deep professional navy blue */
+  --color-brand-blue: #0B2238;
+  --color-brand-blue-light: #14385C;
+  --color-brand-blue-dark: #061524;
 
-  /* Growth green */
-  --color-brand-green: #72C900;
-  --color-brand-green-light: #8AE012;
-  --color-brand-green-dark: #5CA300;
+  /* Metallic Gold accent palette */
+  --color-brand-gold: #C5A059;
+  --color-brand-gold-light: #DFBF7A;
+  --color-brand-gold-dark: #9E7B33;
 
-  --color-brand-light: #F7FAFC;
-  --color-brand-dark: #172B4D;
+  /* Growth / Accent Gold mappings (mirroring website index.css) */
+  --color-brand-green: #C5A059;
+  --color-brand-green-light: #DFBF7A;
+  --color-brand-green-dark: #9E7B33;
+
+  /* Theme mappings for existing classes */
+  --color-brand-purple: #0B2238;
+  --color-brand-purple-light: #14385C;
+  --color-brand-purple-dark: #061524;
+
+  --color-brand-orange: #C5A059;
+  --color-brand-orange-light: #DFBF7A;
+  --color-brand-orange-dark: #9E7B33;
+
+  --color-brand-light: #F4F7FA;
+  --color-brand-dark: #071728;
 
   /* Typography & Neutrals */
-  --color-text-dark: #172B4D;
-  --color-text-mid: #42526E;
-  --color-text-light: #6B778C;
+  --color-text-dark: #0A192F;
+  --color-text-mid: #334E68;
+  --color-text-light: #627D98;
 
   /* Backgrounds & Borders */
   --color-bg-white: #FFFFFF;
-  --color-bg-light: #F7FAFC;
-  --color-bg-subtle: #EDF2F7;
-  --color-border-subtle: #DCE6F2;
+  --color-bg-light: #F4F7FA;
+  --color-bg-subtle: #EBF1F6;
+  --color-border-subtle: #D0DFE8;
 }
 
 :root {
-  --background: #F7FAFC;
-  --foreground: #172B4D;
+  /* Root CSS Variables for direct CSS var() usage */
+  --color-brand-primary: #0B2238;
+  --color-brand-secondary: #14385C;
+  --color-brand-accent: #C5A059;
+  --color-brand-blue: #0B2238;
+  --color-brand-blue-light: #14385C;
+  --color-brand-blue-dark: #061524;
+  --color-brand-gold: #C5A059;
+  --color-brand-gold-light: #DFBF7A;
+  --color-brand-gold-dark: #9E7B33;
+  --color-brand-green: #C5A059;
+  --color-brand-green-light: #DFBF7A;
+  --color-brand-green-dark: #9E7B33;
+  --color-brand-light: #F4F7FA;
+  --color-brand-dark: #071728;
+  --color-text-dark: #0A192F;
+  --color-text-mid: #334E68;
+  --color-text-light: #627D98;
+  --color-bg-white: #FFFFFF;
+  --color-bg-light: #F4F7FA;
+  --color-bg-subtle: #EBF1F6;
+  --color-border-subtle: #D0DFE8;
+  --background: #F4F7FA;
+  --foreground: #0A192F;
 }
 
 body {
-  background-color: #F7FAFC;
-  color: #172B4D;
+  background-color: var(--color-bg-light);
+  color: var(--color-text-dark);
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
 }
 
 /* Global Reusable Component Classes */
 .btn-brand-primary {
-  background-color: #1455B8;
+  background-color: var(--color-brand-primary);
   color: #FFFFFF;
   font-weight: 700;
   border-radius: 0.75rem;
@@ -54,12 +90,12 @@ body {
 }
 
 .btn-brand-primary:hover {
-  background-color: #1688E8;
+  background-color: var(--color-brand-secondary);
 }
 
 .btn-brand-accent {
-  background-color: #72C900;
-  color: #172B4D;
+  background-color: var(--color-brand-accent);
+  color: var(--color-text-dark);
   font-weight: 800;
   border-radius: 0.75rem;
   transition: all 0.15s ease-in-out;
@@ -67,20 +103,20 @@ body {
 }
 
 .btn-brand-accent:hover {
-  background-color: #8AE012;
+  background-color: var(--color-brand-gold-light);
 }
 
 .badge-verified {
-  background-color: rgba(114, 201, 0, 0.15);
-  color: #5CA300;
-  border: 1px solid rgba(114, 201, 0, 0.3);
+  background-color: rgba(197, 160, 89, 0.15);
+  color: var(--color-brand-gold-dark);
+  border: 1px solid rgba(197, 160, 89, 0.3);
   font-weight: 700;
 }
 
 .badge-primary {
-  background-color: rgba(20, 85, 184, 0.1);
-  color: #1455B8;
-  border: 1px solid rgba(20, 85, 184, 0.2);
+  background-color: rgba(11, 34, 56, 0.1);
+  color: var(--color-brand-primary);
+  border: 1px solid rgba(11, 34, 56, 0.2);
   font-weight: 700;
 }
 
@@ -91,14 +127,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #EDF2F7;
+  background: var(--color-bg-subtle);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(20, 85, 184, 0.25);
+  background: rgba(11, 34, 56, 0.25);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(20, 85, 184, 0.45);
+  background: rgba(11, 34, 56, 0.45);
 }

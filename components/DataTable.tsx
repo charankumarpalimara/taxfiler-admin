@@ -89,7 +89,7 @@ export default function DataTable<T>({
   // Internal search and filter tab state
   const [internalSearch, setInternalSearch] = useState<string>('');
   const [internalActiveTab, setInternalActiveTab] = useState<string>('All');
-  
+
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(defaultPageSize);
 
@@ -143,9 +143,9 @@ export default function DataTable<T>({
         st.toLowerCase() === 'all'
           ? rawList.length
           : rawList.filter((item) => {
-              const val = String((item as any)[filterKey] || '').trim().toLowerCase();
-              return val === st.trim().toLowerCase();
-            }).length,
+            const val = String((item as any)[filterKey] || '').trim().toLowerCase();
+            return val === st.trim().toLowerCase();
+          }).length,
     }));
   }, [data, filterTabs, filterKey, statusOptions]);
 
@@ -207,7 +207,7 @@ export default function DataTable<T>({
     typeof toolbarActions === 'function' ? toolbarActions(filteredData) : toolbarActions;
 
   return (
-    <div className="bg-white rounded-2xl border border-border-subtle shadow-sm overflow-hidden">
+    <div className="bg-white rounded-md border border-border-subtle shadow-sm overflow-hidden">
       {/* Top Toolbar */}
       {(searchable || renderedToolbarActions) && (
         <div className="p-4 sm:p-5 border-b border-border-subtle flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -245,18 +245,16 @@ export default function DataTable<T>({
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
                 type="button"
-                className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
-                  isActive
+                className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${isActive
                     ? 'bg-brand-primary text-white shadow-xs'
                     : 'bg-white text-text-mid hover:bg-bg-subtle border border-border-subtle'
-                }`}
+                  }`}
               >
                 <span>{tab.label}</span>
                 {tab.count !== undefined && (
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                      isActive ? 'bg-brand-secondary text-white' : 'bg-bg-subtle text-text-light'
-                    }`}
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${isActive ? 'bg-brand-secondary text-white' : 'bg-bg-subtle text-text-light'
+                      }`}
                   >
                     {tab.count}
                   </span>
@@ -275,13 +273,12 @@ export default function DataTable<T>({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`py-3 px-4 ${
-                    col.align === 'right'
+                  className={`py-3 px-4 ${col.align === 'right'
                       ? 'text-right'
                       : col.align === 'center'
-                      ? 'text-center'
-                      : 'text-left'
-                  } ${col.headerClassName || ''}`}
+                        ? 'text-center'
+                        : 'text-left'
+                    } ${col.headerClassName || ''}`}
                 >
                   {col.header}
                 </th>
@@ -303,20 +300,18 @@ export default function DataTable<T>({
                   <tr
                     key={rowId}
                     onClick={() => onRowClick && onRowClick(row)}
-                    className={`transition-colors ${
-                      onRowClick ? 'hover:bg-brand-primary/5 cursor-pointer group' : 'hover:bg-bg-light'
-                    }`}
+                    className={`transition-colors ${onRowClick ? 'hover:bg-brand-primary/5 cursor-pointer group' : 'hover:bg-bg-light'
+                      }`}
                   >
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`py-3.5 px-4 ${
-                          col.align === 'right'
+                        className={`py-3.5 px-4 ${col.align === 'right'
                             ? 'text-right'
                             : col.align === 'center'
-                            ? 'text-center'
-                            : 'text-left'
-                        } ${col.cellClassName || ''}`}
+                              ? 'text-center'
+                              : 'text-left'
+                          } ${col.cellClassName || ''}`}
                       >
                         {col.cell(row, idx)}
                       </td>
